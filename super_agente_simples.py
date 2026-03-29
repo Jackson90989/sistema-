@@ -949,7 +949,7 @@ def whatsapp_webhook():
         if not data or 'data' not in data:
             return jsonify({"status": "ignorado"}), 200
 
-        mensagem_data = data.get('data', {})
+        mensagem_data = data.get('payload', {})
 
         numero = mensagem_data.get('from', '')
         mensagem = mensagem_data.get('body', '')
