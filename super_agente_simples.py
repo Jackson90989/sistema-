@@ -409,39 +409,27 @@ def formatar_numero_whatsapp(numero):
 import requests
 
 def enviar_whatsapp(chat_id, mensagem):
-    try:
-        headers = {
-            'Content-Type': 'application/json'
-        }
+    headers = {
+        "Content-Type": "application/json"
+    }
 
-        if WHATSAPP_API_KEY:
-            headers['x-api-key'] = WHATSAPP_API_KEY
+    if WHATSAPP_API_KEY:
+        headers["x-api-key"] = WHATSAPP_API_KEY
 
-        payload = {
-            "chatId": chat_id,  # 👈 SEM MODIFICAR
-            "text": mensagem
-        }
+    payload = {
+        "chatId": chat_id,   # 👈 EXATAMENTE COMO VEIO
+        "text": mensagem
+    }
 
-        print("📤 Enviando mensagem...")
-        print(payload)
+    response = requests.post(
+        f"{WHATSAPP_API_URL}/api/sendText",
+        json=payload,
+        headers=headers,
+        timeout=15
+    )
 
-        response = requests.post(
-            f"{WHATSAPP_API_URL}/api/sendText",
-            json=payload,
-            headers=headers,
-            timeout=15
-        )
-
-        print("📨 Resposta WAHA:", response.status_code, response.text)
-
-        if response.status_code == 200:
-            return {'sucesso': True}
-        else:
-            return {'sucesso': False, 'erro': response.text}
-
-    except Exception as e:
-        print("❌ Erro ao enviar:", e)
-        return {'sucesso': False, 'erro': str(e)}
+    print("WAHA:", response.status_code, response.text)
+    return response.status_code == 200
 
 
 
@@ -927,35 +915,26 @@ def whatsapp_webhook():
         print("📩 Webhook recebido:")
         print(data)
 
-        # valida estrutura
-        if not data or 'data' not in data:
+        payload = data.get('payload', {})
+
+        # ✅ Ignora mensagens do próprio bot
+        if payload.get('fromMe'):
             return jsonify({"status": "ignorado"}), 200
 
-        mensagem_data = data.get('payload', {})
+        chat_id = payload.get('from')   # 👈 USO CORRETO
+        mensagem = payload.get('body', '').strip()
 
-        numero = mensagem_data.get('_data', {}).get('Info', {}).get('SenderAlt', '')
-
-        if numero:
-            numero = numero.split('@')[0]
-        mensagem = mensagem_data.get('body', '')
-
-        if numero:
-            numero = numero.split('@')[0]
-
-        mensagem = mensagem.strip() if mensagem else ''
-
-        # ⚠️ NÃO retorna mais 400
-        if not numero or not mensagem:
+        # ✅ Validação leve
+        if not chat_id or not mensagem:
             return jsonify({"status": "sem dados"}), 200
 
-        print(f"📱 Número: {numero}")
         print(f"💬 Mensagem: {mensagem}")
+        print(f"📱 Chat ID: {chat_id}")
 
-        # processa
-        resposta = "👋 Olá! Recebi sua mensagem."
+        resposta = "👋 Olá! Recebi sua mensagem 😊"
 
-        # ENVIA PRO WHATSAPP (ESSENCIAL)
-        enviar_whatsapp(numero, resposta)
+        # ✅ ENVIO CORRETO
+        enviar_whatsapp(chat_id, resposta)
 
         return jsonify({"status": "ok"}), 200
 
