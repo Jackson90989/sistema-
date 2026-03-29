@@ -929,36 +929,64 @@ def whatsapp_status():
         return jsonify({'status': 'offline', 'error': str(e)})
 
 @app.route('/api/whatsapp-webhook', methods=['POST'])
+@app.route('/api/whatsapp-webhook', methods=['POST'])
 def whatsapp_webhook():
     try:
         data = request.json
 
-    try:
-        # padrão WAHA
-        mensagem_data = data.get('data', {})
-        
-        numero = mensagem_data.get('from', '').split('@')[0]
-        mensagem = mensagem_data.get('body', '').strip()
+        # DEBUG (opcional - pode remover depois)
+        print("\n📩 PAYLOAD RECEBIDO:")
+        print(json.dumps(data, indent=2))
 
-    except Exception as e:
-        print(f"Erro ao processar payload: {e}")
-        return jsonify({'resposta': '❌ Erro ao processar mensagem'}), 400
-        
+        # =============================
+        # 📥 CAPTURAR DADOS DO WAHA
+        # =============================
+        mensagem_data = data.get('data', {})
+
+        numero = mensagem_data.get('from', '').split('@')[0]
+
+        # tenta pegar mensagem em diferentes formatos
+        mensagem = (
+            mensagem_data.get('body') or
+            mensagem_data.get('text', {}).get('body') or
+            ""
+        ).strip()
+
+        # =============================
+        # ❌ VALIDAÇÃO
+        # =============================
         if not numero or not mensagem:
+            print("❌ Dados incompletos recebidos")
             return jsonify({'resposta': '❌ Dados incompletos'}), 400
-        
+
+        print(f"📱 Número: {numero}")
+        print(f"💬 Mensagem: {mensagem}")
+
+        # =============================
+        # 👤 IDENTIFICAR USUÁRIO
+        # =============================
         usuario = identificar_usuario_por_whatsapp(numero)
-        
+
+        # =============================
+        # 🧠 PROCESSAR MENSAGEM
+        # =============================
         if usuario:
             resposta = processar_mensagem_aluno_whatsapp(mensagem, usuario)
         else:
             resposta = processar_mensagem_publico_whatsapp(mensagem, numero)
-        
-        return jsonify({'resposta': resposta or "👋 Olá! Como posso ajudar?"})
-        
+
+        # =============================
+        # 📤 RETORNAR RESPOSTA
+        # =============================
+        return jsonify({
+            'resposta': resposta or "👋 Olá! Como posso ajudar?"
+        })
+
     except Exception as e:
-        print(f"Webhook error: {e}")
-        return jsonify({'resposta': "👋 Olá! Como posso ajudar?"})
+        print(f"❌ Webhook error: {e}")
+        return jsonify({
+            'resposta': "👋 Olá! Como posso ajudar?"
+        }), 200
 
 
 @app.route('/api/whatsapp/status')
