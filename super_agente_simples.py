@@ -940,62 +940,43 @@ def whatsapp_status():
 @app.route('/api/whatsapp-webhook', methods=['POST'])
 def whatsapp_webhook():
     try:
-        data = request.json
+        data = request.get_json(force=True)
 
-        # DEBUG (opcional - pode remover depois)
-        print("\n📩 PAYLOAD RECEBIDO:")
-        print(json.dumps(data, indent=2))
+        print("📩 Webhook recebido:")
+        print(data)
 
-        # =============================
-        # 📥 CAPTURAR DADOS DO WAHA
-        # =============================
+        # valida estrutura
+        if not data or 'data' not in data:
+            return jsonify({"status": "ignorado"}), 200
+
         mensagem_data = data.get('data', {})
 
-        numero = mensagem_data.get('from', '').split('@')[0]
+        numero = mensagem_data.get('from', '')
+        mensagem = mensagem_data.get('body', '')
 
-        # tenta pegar mensagem em diferentes formatos
-        mensagem = (
-            mensagem_data.get('body') or
-            mensagem_data.get('text', {}).get('body') or
-            ""
-        ).strip()
+        if numero:
+            numero = numero.split('@')[0]
 
-        # =============================
-        # ❌ VALIDAÇÃO
-        # =============================
+        mensagem = mensagem.strip() if mensagem else ''
+
+        # ⚠️ NÃO retorna mais 400
         if not numero or not mensagem:
-            print("❌ Dados incompletos recebidos")
-            return jsonify({'resposta': '❌ Dados incompletos'}), 400
+            return jsonify({"status": "sem dados"}), 200
 
         print(f"📱 Número: {numero}")
         print(f"💬 Mensagem: {mensagem}")
 
-        # =============================
-        # 👤 IDENTIFICAR USUÁRIO
-        # =============================
-        usuario = identificar_usuario_por_whatsapp(numero)
+        # processa
+        resposta = "👋 Olá! Recebi sua mensagem."
 
-        # =============================
-        # 🧠 PROCESSAR MENSAGEM
-        # =============================
-        if usuario:
-            resposta = processar_mensagem_aluno_whatsapp(mensagem, usuario)
-        else:
-            resposta = processar_mensagem_publico_whatsapp(mensagem, numero)
+        # ENVIA PRO WHATSAPP (ESSENCIAL)
+        enviar_whatsapp(numero, resposta)
 
-        # =============================
-        # 📤 RETORNAR RESPOSTA
-        # =============================
-        return jsonify({
-            'resposta': resposta or "👋 Olá! Como posso ajudar?"
-        })
+        return jsonify({"status": "ok"}), 200
 
     except Exception as e:
-        print(f"❌ Webhook error: {e}")
-        return jsonify({
-            'resposta': "👋 Olá! Como posso ajudar?"
-        }), 200
-
+        print(f"❌ Erro no webhook: {e}")
+        return jsonify({"status": "erro"}), 200
 
 @app.route('/api/whatsapp/status')
 def api_whatsapp_status():
