@@ -417,7 +417,8 @@ def enviar_whatsapp(chat_id, mensagem):
         headers["x-api-key"] = WHATSAPP_API_KEY
 
     payload = {
-        "chatId": chat_id,   # 👈 EXATAMENTE COMO VEIO
+        "session": "default",   # ✅ ESSENCIAL
+        "chatId": chat_id,
         "text": mensagem
     }
 
@@ -430,7 +431,6 @@ def enviar_whatsapp(chat_id, mensagem):
 
     print("WAHA:", response.status_code, response.text)
     return response.status_code == 200
-
 
 
 # ==================== GERENCIADOR DE CADASTRO WHATSAPP ====================
