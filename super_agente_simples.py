@@ -931,7 +931,7 @@ def health():
 def whatsapp_status():
     """Verificar status do WhatsApp"""
     try:
-        response = requests.get(f"{WHATSAPP_API_URL}/status", timeout=2)
+        response = requests.get(f"{WHATSAPP_API_URL}/api/server/status", timeout=10)
         return jsonify(response.json())
     except Exception as e:
         return jsonify({'status': 'offline', 'error': str(e)})
