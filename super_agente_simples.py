@@ -907,8 +907,6 @@ def whatsapp_status():
         return jsonify({'status': 'offline', 'error': str(e)})
 
 @app.route('/api/whatsapp-webhook', methods=['POST'])
-@app.route('/api/whatsapp-webhook', methods=['POST'])
-@app.route('/api/whatsapp-webhook', methods=['POST'])
 def whatsapp_webhook():
     try:
         data = request.get_json(force=True)
@@ -923,18 +921,19 @@ def whatsapp_webhook():
         if not chat_id or not mensagem:
             return "", 200
 
-        # ✅ TENTA ENVIAR, MAS NÃO DEIXA QUEBRAR
-        try:
-            enviar_whatsapp(chat_id, "👋 Olá! Recebi sua mensagem 😊")
-        except Exception as e:
-            print("⚠️ Erro ao enviar WhatsApp:", e)
+        print("📩 Mensagem:", mensagem)
+        print("📱 Chat:", chat_id)
 
-        # ✅ SEMPRE RESPONDE 200
+        # ✅ NÃO CHAME O WAHA AQUI
+        # Apenas registre / empurre para fila / thread
+
+        responder_async(chat_id)  # 👈 fora do ciclo do webhook
+
         return "", 200
 
     except Exception as e:
-        print("❌ Erro geral no webhook:", e)
-        return "", 200
+        print("❌ Erro webhook:", e)
+        return "", 200   # SEMPRE 200
 
 @app.route('/api/whatsapp/status')
 def api_whatsapp_status():
