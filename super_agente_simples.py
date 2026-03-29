@@ -908,39 +908,33 @@ def whatsapp_status():
 
 @app.route('/api/whatsapp-webhook', methods=['POST'])
 @app.route('/api/whatsapp-webhook', methods=['POST'])
+@app.route('/api/whatsapp-webhook', methods=['POST'])
 def whatsapp_webhook():
     try:
         data = request.get_json(force=True)
+        payload = data.get("payload", {})
 
-        print("📩 Webhook recebido:")
-        print(data)
+        if payload.get("fromMe"):
+            return "", 200
 
-        payload = data.get('payload', {})
+        chat_id = payload.get("from")
+        mensagem = payload.get("body", "")
 
-        # ✅ Ignora mensagens do próprio bot
-        if payload.get('fromMe'):
-            return jsonify({"status": "ignorado"}), 200
-
-        chat_id = payload.get('from')   # 👈 USO CORRETO
-        mensagem = payload.get('body', '').strip()
-
-        # ✅ Validação leve
         if not chat_id or not mensagem:
-            return jsonify({"status": "sem dados"}), 200
+            return "", 200
 
-        print(f"💬 Mensagem: {mensagem}")
-        print(f"📱 Chat ID: {chat_id}")
+        # ✅ TENTA ENVIAR, MAS NÃO DEIXA QUEBRAR
+        try:
+            enviar_whatsapp(chat_id, "👋 Olá! Recebi sua mensagem 😊")
+        except Exception as e:
+            print("⚠️ Erro ao enviar WhatsApp:", e)
 
-        resposta = "👋 Olá! Recebi sua mensagem 😊"
-
-        # ✅ ENVIO CORRETO
-        enviar_whatsapp(chat_id, resposta)
-
-        return jsonify({"status": "ok"}), 200
+        # ✅ SEMPRE RESPONDE 200
+        return "", 200
 
     except Exception as e:
-        print(f"❌ Erro no webhook: {e}")
-        return jsonify({"status": "erro"}), 200
+        print("❌ Erro geral no webhook:", e)
+        return "", 200
 
 @app.route('/api/whatsapp/status')
 def api_whatsapp_status():
