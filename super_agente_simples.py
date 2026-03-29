@@ -408,42 +408,50 @@ def formatar_numero_whatsapp(numero):
 
 
 def enviar_whatsapp(numero, mensagem):
-    """Envia mensagem via WhatsApp"""
+    """Envia mensagem via WhatsApp usando WAHA"""
     try:
         headers = {'Content-Type': 'application/json'}
+        
+        # Se tiver API Key
         if WHATSAPP_API_KEY:
             headers['x-api-key'] = WHATSAPP_API_KEY
 
+        # WAHA usa chatId e text
         payload = {
-            'numero': formatar_numero_whatsapp(numero),
-            'mensagem': mensagem
+            "chatId": f"{numero}@c.us",
+            "text": mensagem
         }
-        
+
+        print(f"📤 Enviando mensagem para {numero}...")
+        print(f"URL: {WHATSAPP_API_URL}/api/sendText")
+        print(f"Payload: {payload}")
+
         response = requests.post(
-            f"{WHATSAPP_API_URL}/enviar",
+            f"{WHATSAPP_API_URL}/api/sendText",
             json=payload,
             headers=headers,
             timeout=WHATSAPP_API_TIMEOUT
         )
-        
+
+        print(f"📡 Status Code: {response.status_code}")
+        print(f"📨 Resposta WAHA: {response.text}")
+
         if response.status_code == 200:
-            resultado = response.json()
-            print(f"WhatsApp message sent to {numero}")
-            return {'sucesso': True, 'dados': resultado}
+            return {'sucesso': True, 'dados': response.json()}
         else:
-            print(f"Error sending WhatsApp message: {response.status_code}")
-            return {'sucesso': False, 'erro': f"HTTP {response.status_code}"}
+            return {'sucesso': False, 'erro': response.text}
             
     except requests.exceptions.ConnectionError:
-        print(f"WhatsApp service is not running on {WHATSAPP_API_URL}")
+        print(f"❌ WhatsApp service is not running on {WHATSAPP_API_URL}")
         return {'sucesso': False, 'erro': 'Serviço WhatsApp offline'}
+    
     except requests.exceptions.Timeout:
-        print(f"Timeout while sending WhatsApp message")
+        print(f"⏰ Timeout ao enviar mensagem")
         return {'sucesso': False, 'erro': 'Timeout'}
+    
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        print(f"❌ Erro inesperado: {e}")
         return {'sucesso': False, 'erro': str(e)}
-
 
 def enviar_whatsapp_assincrono(numero, mensagem):
     """Adiciona mensagem à fila para envio assíncrono"""
@@ -1077,7 +1085,11 @@ def api_chat_aluno():
     data = request.json
     pergunta = data.get('mensagem', '')
     resposta = processar_mensagem_aluno_whatsapp(pergunta, {'id': session['aluno_id'], 'nome': session['aluno_nome']})
-    return jsonify({'resposta': resposta})
+    enviar_whatsapp(numero, resposta)
+
+    return jsonify({
+        'status': 'ok'
+    })
 
 @app.route('/chat_secretaria')
 def chat_secretaria():
