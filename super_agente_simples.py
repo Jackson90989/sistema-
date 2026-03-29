@@ -408,7 +408,7 @@ def formatar_numero_whatsapp(numero):
 
 import requests
 
-def enviar_whatsapp(numero, mensagem):
+def enviar_whatsapp(chat_id, mensagem):
     try:
         headers = {
             'Content-Type': 'application/json'
@@ -417,9 +417,8 @@ def enviar_whatsapp(numero, mensagem):
         if WHATSAPP_API_KEY:
             headers['x-api-key'] = WHATSAPP_API_KEY
 
-        # 🔥 FORMATO CORRETO DO WAHA
         payload = {
-            "chatId": f"{numero}@c.us",
+            "chatId": chat_id,  # 👈 SEM MODIFICAR
             "text": mensagem
         }
 
