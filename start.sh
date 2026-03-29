@@ -11,5 +11,5 @@ echo "🐍 Starting Python Flask system..."
 echo "   Database: /app/database"
 echo "   Port: 5000"
 
-# Iniciar serviço
-python sistema_escolar.py
+# CORREÇÃO: Executar o arquivo correto
+python /app/super_agente_simples.py

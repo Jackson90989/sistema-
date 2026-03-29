@@ -17,7 +17,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar código fonte
-COPY sistema_escolar.py .
+COPY super_agente_simples.py .
 COPY start.sh .
 
 # Criar diretório para banco de dados
