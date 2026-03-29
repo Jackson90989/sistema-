@@ -406,61 +406,44 @@ def formatar_numero_whatsapp(numero):
     numero_limpo = limpar_numero_whatsapp(numero)
     return f"{numero_limpo}@c.us"
 
+import requests
 
 def enviar_whatsapp(numero, mensagem):
-    """Envia mensagem via WhatsApp usando WAHA"""
     try:
-        headers = {'Content-Type': 'application/json'}
-        
-        # Se tiver API Key
+        headers = {
+            'Content-Type': 'application/json'
+        }
+
         if WHATSAPP_API_KEY:
             headers['x-api-key'] = WHATSAPP_API_KEY
 
-        # WAHA usa chatId e text
+        # 🔥 FORMATO CORRETO DO WAHA
         payload = {
             "chatId": f"{numero}@c.us",
             "text": mensagem
         }
 
-        print(f"📤 Enviando mensagem para {numero}...")
-        print(f"URL: {WHATSAPP_API_URL}/api/sendText")
-        print(f"Payload: {payload}")
+        print("📤 Enviando mensagem...")
+        print(payload)
 
         response = requests.post(
             f"{WHATSAPP_API_URL}/api/sendText",
             json=payload,
             headers=headers,
-            timeout=WHATSAPP_API_TIMEOUT
+            timeout=15
         )
 
-        print(f"📡 Status Code: {response.status_code}")
-        print(f"📨 Resposta WAHA: {response.text}")
+        print("📨 Resposta WAHA:", response.status_code, response.text)
 
         if response.status_code == 200:
-            return {'sucesso': True, 'dados': response.json()}
+            return {'sucesso': True}
         else:
             return {'sucesso': False, 'erro': response.text}
-            
-    except requests.exceptions.ConnectionError:
-        print(f"❌ WhatsApp service is not running on {WHATSAPP_API_URL}")
-        return {'sucesso': False, 'erro': 'Serviço WhatsApp offline'}
-    
-    except requests.exceptions.Timeout:
-        print(f"⏰ Timeout ao enviar mensagem")
-        return {'sucesso': False, 'erro': 'Timeout'}
-    
+
     except Exception as e:
-        print(f"❌ Erro inesperado: {e}")
+        print("❌ Erro ao enviar:", e)
         return {'sucesso': False, 'erro': str(e)}
 
-def enviar_whatsapp_assincrono(numero, mensagem):
-    """Adiciona mensagem à fila para envio assíncrono"""
-    fila_mensagens.put({
-        'numero': numero,
-        'mensagem': mensagem,
-        'tentativas': 0
-    })
-    return {'sucesso': True, 'mensagem': 'Mensagem na fila'}
 
 
 # ==================== GERENCIADOR DE CADASTRO WHATSAPP ====================
@@ -951,7 +934,10 @@ def whatsapp_webhook():
 
         mensagem_data = data.get('payload', {})
 
-        numero = mensagem_data.get('from', '')
+        numero = mensagem_data.get('_data', {}).get('Info', {}).get('SenderAlt', '')
+
+        if numero:
+            numero = numero.split('@')[0]
         mensagem = mensagem_data.get('body', '')
 
         if numero:
