@@ -907,7 +907,7 @@ def whatsapp_status():
         return jsonify({'status': 'offline', 'error': str(e)})
 
 
-def responder_async(chat_id, mensagem):
+def responder_async(chat_id, mensagem="👋 Olá! Recebi sua mensagem 😊"):
     thread = threading.Thread(
         target=enviar_whatsapp,
         args=(chat_id, mensagem),
@@ -933,16 +933,13 @@ def whatsapp_webhook():
         print("📩 Mensagem:", mensagem)
         print("📱 Chat:", chat_id)
 
-        # ✅ NÃO CHAME O WAHA AQUI
-        # Apenas registre / empurre para fila / thread
-
-        responder_async(chat_id)  # 👈 fora do ciclo do webhook
+        responder_async(chat_id, "👋 Olá! Recebi sua mensagem 😊")
 
         return "", 200
 
     except Exception as e:
         print("❌ Erro webhook:", e)
-        return "", 200   # SEMPRE 200
+        return "", 200
 
 @app.route('/api/whatsapp/status')
 def api_whatsapp_status():
