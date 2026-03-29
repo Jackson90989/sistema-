@@ -932,8 +932,17 @@ def whatsapp_status():
 def whatsapp_webhook():
     try:
         data = request.json
-        numero = data.get('numero', '').split('@')[0]
-        mensagem = data.get('mensagem', '').strip()
+
+    try:
+        # padrão WAHA
+        mensagem_data = data.get('data', {})
+        
+        numero = mensagem_data.get('from', '').split('@')[0]
+        mensagem = mensagem_data.get('body', '').strip()
+
+    except Exception as e:
+        print(f"Erro ao processar payload: {e}")
+        return jsonify({'resposta': '❌ Erro ao processar mensagem'}), 400
         
         if not numero or not mensagem:
             return jsonify({'resposta': '❌ Dados incompletos'}), 400
