@@ -906,6 +906,15 @@ def whatsapp_status():
     except Exception as e:
         return jsonify({'status': 'offline', 'error': str(e)})
 
+
+def responder_async(chat_id, mensagem):
+    thread = threading.Thread(
+        target=enviar_whatsapp,
+        args=(chat_id, mensagem),
+        daemon=True
+    )
+    thread.start()
+
 @app.route('/api/whatsapp-webhook', methods=['POST'])
 def whatsapp_webhook():
     try:
